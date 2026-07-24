@@ -64,7 +64,7 @@ bool UsesModuleUserAgent(const std::wstring& host) {
 #if defined(CM_LOCAL_TEST)
     return host == L"localhost";
 #else
-    return host == L"gw2geoguesser.fly.dev";
+    return host == L"addons.soeed.com";
 #endif
 }
 

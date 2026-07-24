@@ -267,6 +267,7 @@ void AppState::ResetLoadState() {
         manifestFetchResult_ = {};
     }
     communitySyncPending.store(false);
+    communitySyncForce.store(false);
     mapRefreshPending.store(false);
 }
 

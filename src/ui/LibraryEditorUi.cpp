@@ -271,12 +271,15 @@ void Render(AppState& state) {
     }
 
     ImGui::SameLine();
-    if (NuclearModifierHeld() && ImGui::Button("Reset Library To Default")) {
+    const bool canResetLibrary = NuclearModifierHeld();
+    if (!canResetLibrary) {
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.45f);
+    }
+    if (ImGui::Button("Reset Library To Default") && canResetLibrary) {
         state.markerListing.ResetToDefault();
         MarkerSetEditorWindow::Close();
-    } else {
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.45f);
-        ImGui::Button("Reset Library To Default");
+    }
+    if (!canResetLibrary) {
         ImGui::PopStyleVar();
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
             ImGui::SetTooltip("Hold Ctrl+Shift to reset the library to defaults.");

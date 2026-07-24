@@ -21,7 +21,8 @@ public:
     void SetManifest(const CommanderMarkersManifest* manifest);
 
     void LoadCached();
-    bool SyncCatalog();
+    // When force is true, skip lastEdit short-circuit and always refetch /sets.
+    bool SyncCatalog(bool force = false);
     bool FetchSetDetail(const std::string& setId, MarkerSet& outSet, CommunitySetSummary* summary);
 
     std::vector<CommunityCategoryEntry> GetCategories() const;

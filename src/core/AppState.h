@@ -47,6 +47,7 @@ public:
     MarkerPlacementService placementService;
 
     std::atomic<bool> communitySyncPending{false};
+    std::atomic<bool> communitySyncForce{false};
     std::atomic<bool> communitySyncInProgress{false};
     std::atomic<bool> communityUpdatedNotice{false};
     std::atomic<bool> mapRefreshPending{false};
@@ -80,7 +81,7 @@ public:
     void HaltBackgroundWork();
     void Shutdown();
 
-    void RequestCommunitySync();
+    void RequestCommunitySync(bool force = false);
     void ProcessPendingCommunitySync();
 
     void RequestMapRefresh();

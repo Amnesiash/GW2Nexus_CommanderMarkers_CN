@@ -113,26 +113,23 @@ bool CommunityCatalogService::SaveIndex() {
     return StaticDataLoader::WriteCached(addonDir_, kIndexFilename, j.dump(2));
 }
 
-bool CommunityCatalogService::SyncCatalog() {
+bool CommunityCatalogService::SyncCatalog(bool force) {
     if (!manifest_) {
         return false;
     }
 
-    HttpRequestOptions checkOpts;
+    // Match Blish: do not send If-None-Match. CDNs can answer 304 from a stale
+    // cached ETag and skip origin, so Nexus would never see a new lastEdit.
     std::string cachedLastEdit;
+    bool hasCachedSets = false;
     {
         std::lock_guard lock(mutex_);
         cachedLastEdit = lastEdit_;
-    }
-    if (!cachedLastEdit.empty()) {
-        checkOpts.ifNoneMatch = cachedLastEdit;
+        hasCachedSets = !sets_.empty();
     }
 
     const auto checkUrl = manifest_->Absolute(manifest_->communityCheckUrl);
-    const auto checkResponse = HttpGetUrlEx(checkUrl, checkOpts);
-    if (checkResponse.statusCode == 304) {
-        return false;
-    }
+    const auto checkResponse = HttpGetUrlEx(checkUrl);
     if (checkResponse.statusCode < 200 || checkResponse.statusCode >= 300) {
         return false;
     }
@@ -140,7 +137,8 @@ bool CommunityCatalogService::SyncCatalog() {
     try {
         const auto checkJson = nlohmann::json::parse(checkResponse.body);
         const std::string remoteLastEdit = checkJson.value("lastEdit", "");
-        if (!remoteLastEdit.empty() && remoteLastEdit == cachedLastEdit && !sets_.empty()) {
+        if (!force && !remoteLastEdit.empty() && remoteLastEdit == cachedLastEdit &&
+            hasCachedSets) {
             return false;
         }
         if (!FetchAllPages()) {

@@ -13,7 +13,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="$ROOT/build"
 DIST_DIR="$ROOT/dist"
 TOOLCHAIN_FILE="$ROOT/cmake/mingw-w64-toolchain.cmake"
-ADDONS_DIR="${GW2_ADDONS_DIR:-/home/soeed/steam/steamapps/common/Guild Wars 2/addons}"
+ADDONS_DIR="${GW2_ADDONS_DIR:-/home/soeed/bottles/GW2/drive_c/Program Files/Guild Wars 2/addons}"
 DLL_NAME="CommanderMarkers.dll"
 
 RELEASE_MODE=false

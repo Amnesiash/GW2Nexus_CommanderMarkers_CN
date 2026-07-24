@@ -555,7 +555,7 @@ void Render(AppState& state) {
     if (sets.empty()) {
         DisabledGateText("Community library not loaded yet.");
         if (ImGui::Button("Download Community Library")) {
-            state.RequestCommunitySync();
+            state.RequestCommunitySync(true);
         }
         RenderShareWithCommunitySection(state, {});
         return;
@@ -579,11 +579,14 @@ void Render(AppState& state) {
     const ImGuiStyle& style = ImGui::GetStyle();
     const float redownloadWidth = style.FramePadding.x * 2.0f + ImGui::CalcTextSize("Redownload").x;
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - redownloadWidth);
-    if (NuclearModifierHeld() && ImGui::Button("Redownload")) {
-        state.RequestCommunitySync();
-    } else {
+    const bool canForceRedownload = NuclearModifierHeld();
+    if (!canForceRedownload) {
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.45f);
-        ImGui::Button("Redownload");
+    }
+    if (ImGui::Button("Redownload") && canForceRedownload) {
+        state.RequestCommunitySync(true);
+    }
+    if (!canForceRedownload) {
         ImGui::PopStyleVar();
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
             ImGui::SetTooltip("Hold Ctrl+Shift to force a community library redownload.");

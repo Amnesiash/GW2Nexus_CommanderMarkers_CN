@@ -32,7 +32,8 @@ void AppState::HaltBackgroundWork() {
     WaitForBackgroundWork();
 }
 
-void AppState::RequestCommunitySync() {
+void AppState::RequestCommunitySync(bool force) {
+    communitySyncForce.store(force);
     communitySyncPending.store(true);
 }
 
@@ -44,15 +45,16 @@ void AppState::ProcessPendingCommunitySync() {
         return;
     }
     communitySyncPending.store(false);
+    const bool force = communitySyncForce.exchange(false);
 
-    std::thread([this]() {
+    std::thread([this, force]() {
         detail::BackgroundWorkGuard guard(communitySyncInProgress);
 
         if (shutdownRequested_.load()) {
             return;
         }
 
-        const bool updated = communityCatalog.SyncCatalog();
+        const bool updated = communityCatalog.SyncCatalog(force);
         if (shutdownRequested_.load()) {
             return;
         }
