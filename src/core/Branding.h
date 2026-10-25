@@ -12,7 +12,7 @@ inline constexpr int32_t kSignature = 0xFE71B519;
 // orphan existing settings.
 inline constexpr const char* kDisplayName = "Commander Marker CN";
 inline constexpr const char* kLogChannel = "Commander Markers";
-inline constexpr const char* kAuthor = "Soeed.4160";
+inline constexpr const char* kAuthor = "Soeed、vaon";
 // English source of truth: shown by Nexus in the addon library (entry.cpp) and
 // on the addon's config page (OptionsPanel::RenderNexusConfigEntry). Both call
 // sites display it through T(), so the Chinese text below is what players see

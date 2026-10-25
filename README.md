@@ -122,6 +122,7 @@ See [CHANGELOG.md](CHANGELOG.md).
 ## Credits
 
 - **Soeed** - BlishHUD Commander Markers, and Nexus port
+- **vaon** - Simplified Chinese localization
 - **Manlaan** - original clickable markers in BlishHUD
 - **Freesnöw** - static data hosting (`bhm.blishhud.com`, `assets.gw2dat.com`)
 - **Raidcore** - Nexus addon platform
