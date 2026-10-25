@@ -79,10 +79,8 @@ void AppState::EnsureOptionsReady() {
     addonDir = api->Paths_GetAddonDirectory("CommanderMarkers");
     settings.Load(settingsPath());
     Locale::SetLanguage(Locale::FromSettingsValue(settings.language));
-    // Publish the bundled strings first, then ask Nexus which language it runs
-    // so FollowNexus can pick it up.
+    // Publish the bundled strings so Nexus can serve them for FollowNexus.
     Locale::RegisterNexusStrings(api);
-    Locale::DetectNexusLanguage(api);
     optionsReady = true;
 }
 
