@@ -7,6 +7,7 @@
 #include "ui/OptionsPanel.h"
 #include "ui/SettingsWindow.h"
 #include "ui/TextureService.h"
+#include "core/Locale.h"
 
 #include <filesystem>
 #include <imgui.h>
@@ -15,6 +16,10 @@
 namespace cm {
 namespace QuickAccessService {
 namespace {
+
+// Short alias so the wrapped literals stay readable.
+using cm::Locale::T;
+
 
 constexpr const char* kShortcutId = "CM_QUICKACCESS";
 constexpr const char* kToggleBind = "CM_TOGGLE";
@@ -47,15 +52,15 @@ void RenderContextMenu() {
 
     ImGui::Separator();
 
-    if (ImGui::Selectable("Open Settings")) {
+    if (ImGui::Selectable(T("Open Settings"))) {
         SettingsWindow::Open(SettingsTab::General);
     }
 
-    if (ImGui::MenuItem("Lieutenant mode", nullptr, &state.ltMode)) {
+    if (ImGui::MenuItem(T("Lieutenant mode"), nullptr, &state.ltMode)) {
     }
 
     ImGui::Separator();
-    ImGui::TextDisabled("Library (current map)");
+    ImGui::TextDisabled(T("Library (current map)"));
     const int mapId = state.mumbleLink ? static_cast<int>(state.mumbleLink->Context.MapID) : 0;
     for (const MarkerSet& markerSet : state.markerListing.GetMarkersForMap(mapId)) {
         if (!markerSet.enabled) {
@@ -69,8 +74,8 @@ void RenderContextMenu() {
     }
 
     ImGui::Separator();
-    if (ImGui::Selectable(settings.showMarkerPanel ? "Hide Clickable Markers"
-                                                   : "Show Clickable Markers")) {
+    if (ImGui::Selectable(settings.showMarkerPanel ? T("Hide Clickable Markers")
+                                                   : T("Show Clickable Markers"))) {
         settings.showMarkerPanel = !settings.showMarkerPanel;
         state.settings.Save(state.settingsPath());
     }
@@ -128,7 +133,7 @@ bool LoadTextures(AddonAPI_t* api, const AppState& state, std::string* iconTexId
 std::string BuildTooltip(const AppState& state) {
     std::string tooltip = kDisplayName;
     if (cm::IsInGame(state.mumbleLink, state.nexusLink)) {
-        tooltip += "\nUse the context menu for library and settings.";
+        tooltip += T("\nUse the context menu for library and settings.");
     }
     return tooltip;
 }

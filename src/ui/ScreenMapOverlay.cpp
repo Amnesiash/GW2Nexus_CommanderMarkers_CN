@@ -9,6 +9,7 @@
 #include "ui/UiFontService.h"
 #include "ui/UiLayer.h"
 #include "utils/InteractBindService.h"
+#include "core/Locale.h"
 
 #include <cmath>
 #include <imgui.h>
@@ -17,6 +18,10 @@
 namespace cm {
 namespace ScreenMapOverlay {
 namespace {
+
+// Short alias so the wrapped literals stay readable.
+using cm::Locale::T;
+
 
 constexpr float kFloorFilterMeters = 30.0f;
 constexpr float kTriggerMarkerIconSize = 32.0f;
@@ -212,7 +217,7 @@ void DrawInteractPrompt(AppState& state,
     }
 
     char prompt[256];
-    std::snprintf(prompt, sizeof(prompt), "Press '%s' to place markers\n%s",
+    std::snprintf(prompt, sizeof(prompt), T("Press '%s' to place markers\n%s"),
                   InteractBindService::GetPrimaryKeyLabel(), closest->name.c_str());
 
     const float scale = state.nexusLink->Scaling > 0.0f ? state.nexusLink->Scaling : 1.0f;

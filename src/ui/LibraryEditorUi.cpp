@@ -8,6 +8,7 @@
 #include "services/MarkerListing.h"
 #include "ui/OptionsUiKit.h"
 #include "ui/TextureService.h"
+#include "core/Locale.h"
 
 #include <algorithm>
 #include <imgui.h>
@@ -15,6 +16,10 @@
 namespace cm {
 namespace LibraryEditorUi {
 namespace {
+
+// Short alias so the wrapped literals stay readable.
+using cm::Locale::T;
+
 
 constexpr float kIconColumnWidth = 72.0f;
 constexpr float kIconSize = 64.0f;
@@ -66,7 +71,7 @@ bool ActionIconButton(const char* id, ImTextureID icon, float height, const char
 
 bool DrawEnabledStatusToggle(const char* id, bool* enabled) {
     const bool isActive = *enabled;
-    const char* statusText = isActive ? "Active" : "Disabled";
+    const char* statusText = isActive ? T("Active") : T("Disabled");
     const ImVec4 statusColor =
         isActive ? ImVec4(0.55f, 0.95f, 0.55f, 1.0f) : ImVec4(0.85f, 0.55f, 0.55f, 1.0f);
     const ImTextureID icon =
@@ -96,8 +101,8 @@ bool DrawEnabledStatusToggle(const char* id, bool* enabled) {
         ImVec2(x, yCenter - labelSize.y * 0.5f), ImGui::GetColorU32(statusColor), statusText);
 
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip(isActive ? "Click to disable this marker set" :
-                                     "Click to enable this marker set");
+        ImGui::SetTooltip(isActive ? T("Click to disable this marker set") :
+                                     T("Click to enable this marker set"));
     }
 
     ImGui::PopID();
@@ -162,25 +167,25 @@ void RenderMarkerSetRow(AppState& state,
     } else {
         ImGui::Dummy(ImVec2(0.0f, ImGui::GetTextLineHeight()));
     }
-    ImGui::TextDisabled("Map: %s | Markers: %zu",
+    ImGui::TextDisabled(T("Map: %s | Markers: %zu"),
                         state.mapData.Describe(markerSet.mapId).c_str(),
                         markerSet.markers.size());
-    ImGui::TextDisabled("Author: %s", MarkerListing::DisplayAuthor(markerSet).c_str());
+    ImGui::TextDisabled(T("Author: %s"), MarkerListing::DisplayAuthor(markerSet).c_str());
     if (!markerSet.enabled) {
         ImGui::PopStyleColor();
     }
 
     ImGui::TableSetColumnIndex(2);
     const bool communityLinked = MarkerListing::IsCommunityLinked(markerSet);
-    const char* editLabel = communityLinked ? "Personalize" : "Edit";
+    const char* editLabel = communityLinked ? T("Personalize") : T("Edit");
     const float editWidth =
         style.FramePadding.x * 2.0f + 16.0f + style.ItemInnerSpacing.x +
         ImGui::CalcTextSize(editLabel).x;
     const float deleteWidth =
         style.FramePadding.x * 2.0f + 16.0f + style.ItemInnerSpacing.x +
-        ImGui::CalcTextSize("Delete").x;
+        ImGui::CalcTextSize(T("Delete")).x;
     const float previewWidth = actionHeight;
-    const float placeWidth = style.FramePadding.x * 2.0f + ImGui::CalcTextSize("Place").x;
+    const float placeWidth = style.FramePadding.x * 2.0f + ImGui::CalcTextSize(T("Place")).x;
     const bool showMapActions = markerSet.mapId == currentMapId;
     float actionsWidth = editWidth;
     if (communityLinked) {
@@ -203,36 +208,36 @@ void RenderMarkerSetRow(AppState& state,
     }
     if (ImGui::IsItemHovered() && communityLinked) {
         ImGui::SetTooltip(
-            "Open the editor with this set as a template. Save to add your personalized copy.");
+            T("Open the editor with this set as a template. Save to add your personalized copy."));
     }
 
     if (communityLinked) {
         ImGui::SameLine(0.0f, style.ItemSpacing.x);
-        if (TexturedButton("delete", "Delete", TextureService::GetUiTexture("iconDelete"), 16.0f,
+        if (TexturedButton("delete", T("Delete"), TextureService::GetUiTexture("iconDelete"), 16.0f,
                            ImVec2(0.0f, actionHeight))) {
             state.mapWatch.RemovePreviewMarkerSet();
             state.markerListing.DeleteMarker(markerSet);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Remove this imported set from your library");
+            ImGui::SetTooltip(T("Remove this imported set from your library"));
         }
     }
 
     if (showMapActions) {
         ImGui::SameLine(0.0f, style.ItemSpacing.x);
         if (ActionIconButton("preview", TextureService::GetUiTexture("eye"), actionHeight,
-                             "Hover to preview markers on the map")) {
+                             T("Hover to preview markers on the map"))) {
         }
         if (ImGui::IsItemHovered()) {
             *hoveredPreviewIndex = static_cast<int>(listingIndex);
         }
         ImGui::SameLine(0.0f, style.ItemSpacing.x);
-        if (ImGui::Button("Place", ImVec2(placeWidth, actionHeight)) && state.mumbleLink &&
+        if (ImGui::Button(T("Place"), ImVec2(placeWidth, actionHeight)) && state.mumbleLink &&
             state.nexusLink) {
             state.mapWatch.PlaceMarkerSet(markerSet, state.mumbleLink, state.nexusLink);
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Place squad markers for this set.");
+            ImGui::SetTooltip(T("Place squad markers for this set."));
         }
     }
 
@@ -253,20 +258,19 @@ void RenderMarkerSetRow(AppState& state,
 void Render(AppState& state) {
     using namespace OptionsUiKit;
 
-    SectionHeading("AutoMarker Library");
+    SectionHeading(T("AutoMarker Library"));
     SectionSubtext(
-        "Manage saved marker sets. Imported community sets are read-only — use Personalize to "
-        "create your own editable copy.");
+        T("Manage saved marker sets. Imported community sets are read-only — use Personalize to create your own editable copy."));
 
-    SettingCheckbox("Current map", &state.settings.libraryFilterCurrentMap,
-                    "Only show marker sets for your current map.");
+    SettingCheckbox(T("Current map"), &state.settings.libraryFilterCurrentMap,
+                    T("Only show marker sets for your current map."));
     ImGui::SameLine();
-    SettingCheckbox("Mine", &state.settings.libraryFilterMine,
-                    "Hide marker sets imported from the community library.");
+    SettingCheckbox(T("Mine"), &state.settings.libraryFilterMine,
+                    T("Hide marker sets imported from the community library."));
 
     ImGui::Spacing();
 
-    if (ImGui::Button("Add New")) {
+    if (ImGui::Button(T("Add New"))) {
         MarkerSetEditorWindow::OpenNew(state);
     }
 
@@ -275,14 +279,14 @@ void Render(AppState& state) {
     if (!canResetLibrary) {
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.45f);
     }
-    if (ImGui::Button("Reset Library To Default") && canResetLibrary) {
+    if (ImGui::Button(T("Reset Library To Default")) && canResetLibrary) {
         state.markerListing.ResetToDefault();
         MarkerSetEditorWindow::Close();
     }
     if (!canResetLibrary) {
         ImGui::PopStyleVar();
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
-            ImGui::SetTooltip("Hold Ctrl+Shift to reset the library to defaults.");
+            ImGui::SetTooltip(T("Hold Ctrl+Shift to reset the library to defaults."));
         }
     }
 
@@ -291,10 +295,10 @@ void Render(AppState& state) {
         ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - LibrarySearchUi::kSearchFieldWidth;
     ImGui::SetCursorPosX(searchX);
     ImGui::SetNextItemWidth(LibrarySearchUi::kSearchFieldWidth);
-    ImGui::InputTextWithHint("##cm_library_search", "Search", g_searchQuery,
+    ImGui::InputTextWithHint("##cm_library_search", T("Search"), g_searchQuery,
                              sizeof(g_searchQuery));
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("Filter by marker set name, description, or map name.");
+        ImGui::SetTooltip(T("Filter by marker set name, description, or map name."));
     }
 
     ImGui::Separator();
@@ -346,7 +350,7 @@ void Render(AppState& state) {
         }
 
         if (!anyVisible) {
-            DisabledGateText("No marker sets match the current filters.");
+            DisabledGateText(T("No marker sets match the current filters."));
         }
     }
     ImGui::EndChild();

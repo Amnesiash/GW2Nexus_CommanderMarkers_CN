@@ -7,6 +7,7 @@
 #include "ui/TextureService.h"
 #include "utils/MarkerBindHelper.h"
 #include "utils/MarkerPlacementHelper.h"
+#include "core/Locale.h"
 
 #include <imgui.h>
 #include <optional>
@@ -16,6 +17,10 @@
 namespace cm {
 namespace MarkersPanel {
 namespace {
+
+// Short alias so the wrapped literals stay readable.
+using cm::Locale::T;
+
 
 constexpr int kHotkeyDelayMs = 50;
 
@@ -188,9 +193,9 @@ void RenderMarkerRow(AppState& state,
 
         char tooltip[64];
         if (groundRow) {
-            std::snprintf(tooltip, sizeof(tooltip), "%s Ground", def.displayName);
+            std::snprintf(tooltip, sizeof(tooltip), T("%s Ground"), def.displayName);
         } else {
-            std::snprintf(tooltip, sizeof(tooltip), "%s Object", def.displayName);
+            std::snprintf(tooltip, sizeof(tooltip), T("%s Object"), def.displayName);
         }
 
         const bool selected = groundRow && g_uiState.selectedGroundMarker &&
@@ -276,7 +281,7 @@ void RenderPanelContent(AppState& state, bool optionsPreview) {
         draw->AddRectFilled(windowPos,
                             ImVec2(windowPos.x + windowSize.x, windowPos.y + windowSize.y),
                             IM_COL32(96, 96, 96, 192));
-        const char* label = "Drag";
+        const char* label = T("Drag");
         const ImVec2 textSize = ImGui::CalcTextSize(label);
         draw->AddText(
             ImVec2(windowPos.x + (windowSize.x - textSize.x) * 0.5f,

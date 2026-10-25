@@ -1,6 +1,7 @@
 #include "core/AppState.h"
 
 #include "core/Branding.h"
+#include "core/Locale.h"
 #include "services/RtApiService.h"
 #include "ui/QuickAccessService.h"
 #include "ui/SettingsWindow.h"
@@ -74,6 +75,7 @@ void AppState::EnsureOptionsReady() {
 
     addonDir = api->Paths_GetAddonDirectory("CommanderMarkers");
     settings.Load(settingsPath());
+    Locale::SetLanguage(Locale::FromSettingsValue(settings.language));
     optionsReady = true;
 }
 

@@ -5,6 +5,7 @@
 #include "data/MarkerSetJson.h"
 #include "data/SyncBaselineHash.h"
 #include "utils/UuidUtils.h"
+#include "core/Locale.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -14,6 +15,10 @@
 namespace cm {
 
 namespace {
+
+// Short alias so the wrapped literals stay readable.
+using cm::Locale::T;
+
 
 struct BuiltinEntry {
     std::string id;
@@ -361,7 +366,7 @@ std::string MarkerListing::DisplayAuthor(const MarkerSet& markerSet) {
     if (!markerSet.communitySetId.empty()) {
         return markerSet.author;
     }
-    return "You";
+    return T("You");
 }
 
 bool MarkerListing::IsCommunityLinked(const MarkerSet& markerSet) {

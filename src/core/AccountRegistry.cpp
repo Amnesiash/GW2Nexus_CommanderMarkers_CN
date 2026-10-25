@@ -1,6 +1,7 @@
 #include "core/AccountRegistry.h"
 
 #include "services/Gw2ApiClient.h"
+#include "core/Locale.h"
 
 #include <algorithm>
 #include <fstream>
@@ -9,6 +10,10 @@
 namespace cm {
 
 namespace {
+
+// Short alias so the wrapped literals stay readable.
+using cm::Locale::T;
+
 
 bool HasPermission(const std::vector<std::string>& permissions, const char* perm) {
     return std::find(permissions.begin(), permissions.end(), perm) != permissions.end();
@@ -94,22 +99,22 @@ void AccountRegistry::SetActiveTokenId(const std::string& tokenId) {
 RegisterKeyResult AccountRegistry::RegisterKey(Gw2ApiClient& client, const std::string& apiKey) {
     RegisterKeyResult result;
     if (apiKey.empty()) {
-        result.message = "API key is empty.";
+        result.message = T("API key is empty.");
         return result;
     }
     client.SetApiKey(apiKey);
     const auto tokenInfo = client.FetchTokenInfo();
     if (!tokenInfo.valid) {
-        result.message = "API key validation failed.";
+        result.message = T("API key validation failed.");
         return result;
     }
     if (!HasPermission(tokenInfo.permissions, "account")) {
-        result.message = "API key must have account permission.";
+        result.message = T("API key must have account permission.");
         return result;
     }
     const auto accountName = client.FetchAccountName();
     if (!accountName || accountName->empty()) {
-        result.message = "Failed to fetch account name.";
+        result.message = T("Failed to fetch account name.");
         return result;
     }
 
@@ -129,7 +134,11 @@ RegisterKeyResult AccountRegistry::RegisterKey(Gw2ApiClient& client, const std::
     activeTokenId_ = account.tokenId;
 
     result.success = true;
-    result.message = "Registered " + account.accountName + ".";
+    // Translated as a whole sentence so the account name lands in the right
+    // place for the active language.
+    char registered[256];
+    std::snprintf(registered, sizeof(registered), T("Registered %s."), account.accountName.c_str());
+    result.message = registered;
     result.account = std::move(account);
     return result;
 }

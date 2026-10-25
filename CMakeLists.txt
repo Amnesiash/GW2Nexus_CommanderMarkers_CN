@@ -76,6 +76,7 @@ set(SRC_FILES
     src/core/AppState.cpp
     src/core/AppStateInit.cpp
     src/core/AppStateBackground.cpp
+    src/core/Locale.cpp
     src/core/SettingsStore.cpp
     src/core/MumbleUtils.cpp
     src/data/MarkerSetJson.cpp
@@ -167,7 +168,7 @@ if(CMAKE_CXX_COMPILER MATCHES "mingw" OR MINGW)
 endif()
 
 set_target_properties(NexusCommanderMarkers PROPERTIES
-    OUTPUT_NAME "CommanderMarkers"
+    OUTPUT_NAME "Commander_Markers_CN"
     PREFIX ""
     SUFFIX ".dll"
 )

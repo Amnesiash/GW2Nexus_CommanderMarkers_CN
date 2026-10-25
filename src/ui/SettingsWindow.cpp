@@ -1,6 +1,7 @@
 #include "ui/SettingsWindow.h"
 
 #include "core/AppState.h"
+#include "core/Locale.h"
 #include "ui/OptionsPanel.h"
 #include "ui/MarkerSetEditorWindow.h"
 
@@ -8,11 +9,23 @@
 
 #include <imgui.h>
 
+#include <string>
+
 namespace cm {
 namespace SettingsWindow {
 namespace {
 
-constexpr const char* kWindowId = "Commander Markers Settings###CM_SETTINGS_WINDOW";
+// Short alias so the wrapped literals stay readable.
+using cm::Locale::T;
+
+// ImGui splits the window name on "###": everything before it is the visible
+// title, everything after it is the immutable window ID. The ID half must stay
+// identical across languages so the Nexus escape registration (below) keeps
+// matching the same window.
+constexpr const char* kWindowIdSuffix = "###CM_SETTINGS_WINDOW";
+
+// Escape registration is keyed by the original, untranslated window ID.
+constexpr const char* kWindowId = "Commander Marker CN Settings###CM_SETTINGS_WINDOW";
 
 bool open_ = false;
 bool escapeRegistered_ = false;
@@ -94,7 +107,10 @@ void Render(AppState& state) {
     ImGui::SetNextWindowSize(ImVec2(660.0f, 680.0f), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSizeConstraints(ImVec2(660.0f, 680.0f), ImVec2(9999.0f, 9999.0f));
 
-    if (!ImGui::Begin(kWindowId, &open_, ImGuiWindowFlags_None)) {
+    // Localised title with the immutable ID appended, so the window ID (and the
+    // escape registration that keys on it) is unaffected by the active language.
+    const std::string windowName = std::string(T("Commander Marker CN Settings")) + kWindowIdSuffix;
+    if (!ImGui::Begin(windowName.c_str(), &open_, ImGuiWindowFlags_None)) {
         ImGui::End();
         SyncEscapeRegistration(state.api);
         return;

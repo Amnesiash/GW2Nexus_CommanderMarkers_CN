@@ -11,6 +11,7 @@
 #include "ui/TextureService.h"
 #include "services/MapWatchService.h"
 #include "ui/OptionsUiKit.h"
+#include "core/Locale.h"
 
 #include <cctype>
 #include <cstdio>
@@ -25,9 +26,22 @@ namespace cm {
 namespace MarkerSetEditorWindow {
 namespace {
 
-constexpr const char* kWindowId = "Create/edit markers###CM_MARKER_SET_EDITOR";
-constexpr const char* kUnsavedDialogId = "Unsaved Marker Set Changes###CM_MARKER_UNSAVED";
-constexpr const char* kDeleteDialogId = "Delete Marker Set###CM_MARKER_DELETE";
+// Short alias so the wrapped literals stay readable.
+using cm::Locale::T;
+
+
+// ImGui splits a window name on "###": the part before it is the visible title,
+// the part after it is the immutable window ID. Titles are translated, IDs are
+// not, so window identity survives a language switch.
+constexpr const char* kWindowId = "###CM_MARKER_SET_EDITOR";
+constexpr const char* kUnsavedDialogId = "###CM_MARKER_UNSAVED";
+constexpr const char* kDeleteDialogId = "###CM_MARKER_DELETE";
+
+// Composes a localised title with its immutable ID suffix.
+std::string MakeWindowName(const char* title, const char* id) {
+    return std::string(T(title)) + id;
+}
+
 constexpr int kMarkerSlotCount = 8;
 
 struct MarkerSlot {
@@ -209,24 +223,24 @@ std::optional<std::string> ValidateDraft(const AppState& state) {
     SyncDraftFromSlots();
 
     if (TrimCopy(g_state.draft.name).empty()) {
-        return "Name is required.";
+        return T("Name is required.");
     }
 
     if (g_state.draft.mapId <= 0) {
-        return "Map is invalid. Set trigger location while on a map.";
+        return T("Map is invalid. Set trigger location while on a map.");
     }
 
     if (!TriggerIsSet(g_state.draft.trigger)) {
-        return "Trigger location is required. Use Set Trigger Location.";
+        return T("Trigger location is required. Use Set Trigger Location.");
     }
 
     if (g_state.draft.markers.empty()) {
-        return "At least one marker with a position is required.";
+        return T("At least one marker with a position is required.");
     }
 
     for (const MarkerCoord& marker : g_state.draft.markers) {
         if (!std::isfinite(marker.x) || !std::isfinite(marker.y) || !std::isfinite(marker.z)) {
-            return "One or more markers have invalid coordinates.";
+            return T("One or more markers have invalid coordinates.");
         }
     }
 
@@ -241,7 +255,7 @@ constexpr float kDeleteButtonSize = 22.0f;
 
 float CalcActionButtonWidth() {
     const ImGuiStyle& style = ImGui::GetStyle();
-    return style.FramePadding.x * 2.0f + ImGui::CalcTextSize("Set Location").x;
+    return style.FramePadding.x * 2.0f + ImGui::CalcTextSize(T("Set Location")).x;
 }
 
 float CalcMarkerFieldsWidth(float coordWidth) {
@@ -354,7 +368,7 @@ bool InputWorldCoord(const char* label, WorldCoord& coord) {
         changed |= InputOptionalFloat("Z##trigger", "Z", coord.z, false, kCoordWidth);
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("Trigger world position (X east/west, Y north/south, Z height).");
+        ImGui::SetTooltip(T("Trigger world position (X east/west, Y north/south, Z height)."));
     }
     return changed;
 }
@@ -429,7 +443,7 @@ void RenderMarkerTable(AppState& state) {
                 "Copy currently placed squad marker locations from the Real-Time API.");
         }
     } else {
-        RenderDisabledRtApiButton("import_all_disabled", "Import active squad markers",
+        RenderDisabledRtApiButton("import_all_disabled", T("Import active squad markers"),
                                   "iconImport", "Requires the Real-Time API addon.");
     }
 
@@ -479,10 +493,10 @@ void RenderMarkerTable(AppState& state) {
 
             char nameBuf[96];
             std::snprintf(nameBuf, sizeof(nameBuf), "%s", slot.name.c_str());
-            if (InputTextHint("##desc", nameBuf, sizeof(nameBuf), "Label", fieldsWidth)) {
+            if (InputTextHint("##desc", nameBuf, sizeof(nameBuf), T("Label"), fieldsWidth)) {
                 slot.name = nameBuf;
             }
-            ItemTooltip("Optional label shown with this marker in the set.");
+            ItemTooltip(T("Optional label shown with this marker in the set."));
 
             float x = slot.set ? slot.x : 0.0f;
             float y = slot.set ? slot.y : 0.0f;
@@ -492,21 +506,21 @@ void RenderMarkerTable(AppState& state) {
                 slot.x = x;
                 slot.set = true;
             }
-            ItemTooltip("World X (east/west).");
+            ItemTooltip(T("World X (east/west)."));
 
             ImGui::SameLine();
             if (InputOptionalFloat("Y##y", "Y", y, active, kCoordWidth)) {
                 slot.y = y;
                 slot.set = true;
             }
-            ItemTooltip("World Y (north/south).");
+            ItemTooltip(T("World Y (north/south)."));
 
             ImGui::SameLine();
             if (InputOptionalFloat("Z##z", "Z", z, active, kCoordWidth)) {
                 slot.z = z;
                 slot.set = true;
             }
-            ItemTooltip("World Z (height/elevation).");
+            ItemTooltip(T("World Z (height/elevation)."));
 
             if (!active) {
                 ImGui::PopStyleVar();
@@ -519,18 +533,18 @@ void RenderMarkerTable(AppState& state) {
                 if (DrawDeleteButton()) {
                     ClearSlot(slot);
                 }
-                ItemTooltip("Remove this marker from the set");
+                ItemTooltip(T("Remove this marker from the set"));
             }
 
             ImGui::TableSetColumnIndex(3);
-            if (ImGui::Button("Set Location", actionButtonSize)) {
+            if (ImGui::Button(T("Set Location"), actionButtonSize)) {
                 ApplyPlayerPosition(state, slot);
             }
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("Use your current player position for this marker.");
+                ImGui::SetTooltip(T("Use your current player position for this marker."));
             }
             if (rtapiAvailable) {
-                if (OptionsUiKit::TexturedButton("import", "Import",
+                if (OptionsUiKit::TexturedButton("import", T("Import"),
                                                  TextureService::GetUiTexture("iconImport"), 16.0f,
                                                  actionButtonSize)) {
                     ImportSlotFromRtApi(slotIndex, slot);
@@ -540,7 +554,7 @@ void RenderMarkerTable(AppState& state) {
                         "Import this marker's position from squad markers placed in-game.");
                 }
             } else {
-                RenderDisabledRtApiButton("import_disabled", "Import", "iconImport",
+                RenderDisabledRtApiButton("import_disabled", T("Import"), "iconImport",
                                           "Requires the Real-Time API addon.", actionButtonSize);
             }
 
@@ -556,20 +570,23 @@ void RenderUnsavedDialog(AppState& state) {
         return;
     }
 
-    ImGui::OpenPopup(kUnsavedDialogId);
+    const std::string unsavedDialogName =
+        MakeWindowName(T("Unsaved Marker Set Changes"), kUnsavedDialogId);
+    ImGui::OpenPopup(unsavedDialogName.c_str());
 
-    if (!ImGui::BeginPopupModal(kUnsavedDialogId, nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (!ImGui::BeginPopupModal(unsavedDialogName.c_str(), nullptr,
+                                ImGuiWindowFlags_AlwaysAutoResize)) {
         return;
     }
 
-    OptionsUiKit::WarningText("You have unsaved changes to this marker set.");
-    ImGui::TextUnformatted("Save your changes, discard them, or keep editing.");
+    OptionsUiKit::WarningText(T("You have unsaved changes to this marker set."));
+    ImGui::TextUnformatted(T("Save your changes, discard them, or keep editing."));
 
     if (!g_state.validationError.empty()) {
         OptionsUiKit::WarningText(g_state.validationError.c_str());
     }
 
-    if (OptionsUiKit::TexturedButton("save", "Save", TextureService::GetUiTexture("iconSave"))) {
+    if (OptionsUiKit::TexturedButton("save", T("Save"), TextureService::GetUiTexture("iconSave"))) {
         if (TrySaveDraft(state)) {
             ForceClose(state);
             g_state.showUnsavedDialog = false;
@@ -606,27 +623,29 @@ void RenderDeleteDialog(AppState& state) {
         return;
     }
 
-    ImGui::OpenPopup(kDeleteDialogId);
+    const std::string deleteDialogName = MakeWindowName(T("Delete Marker Set"), kDeleteDialogId);
+    ImGui::OpenPopup(deleteDialogName.c_str());
 
-    if (!ImGui::BeginPopupModal(kDeleteDialogId, nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (!ImGui::BeginPopupModal(deleteDialogName.c_str(), nullptr,
+                                ImGuiWindowFlags_AlwaysAutoResize)) {
         return;
     }
 
-    OptionsUiKit::WarningText("Delete this marker set?");
+    OptionsUiKit::WarningText(T("Delete this marker set?"));
     const std::string displayName = TrimCopy(g_state.draft.name);
     if (!displayName.empty()) {
-        ImGui::Text("\"%s\" will be removed from your library.", displayName.c_str());
+        ImGui::Text(T("\"%s\" will be removed from your library."), displayName.c_str());
     } else {
         ImGui::TextUnformatted("This cannot be undone.");
     }
 
-    if (OptionsUiKit::TexturedButton("delete_confirm", "Delete",
+    if (OptionsUiKit::TexturedButton("delete_confirm", T("Delete"),
                                      TextureService::GetUiTexture("iconDelete"))) {
         DeleteDraft(state);
         ImGui::CloseCurrentPopup();
     }
     ImGui::SameLine();
-    if (OptionsUiKit::TexturedButton("delete_cancel", "Cancel",
+    if (OptionsUiKit::TexturedButton("delete_cancel", T("Cancel"),
                                      TextureService::GetUiTexture("iconGoBack"))) {
         g_state.showDeleteDialog = false;
         ImGui::CloseCurrentPopup();
@@ -681,7 +700,7 @@ void OpenPersonalizedFromTemplate(AppState& state, const MarkerSet& templateSet)
     g_state.listingIndex = -1;
     g_state.draft = MarkerListing::DuplicateAsEditableCopy(templateSet);
     if (g_state.draft.name == templateSet.name && !g_state.draft.name.empty()) {
-        g_state.draft.name += " (personal)";
+        g_state.draft.name += T(" (personal)");
     }
     g_state.importBuffer.clear();
     g_state.importError.clear();
@@ -720,7 +739,8 @@ void Render(AppState& state) {
     ImGui::SetNextWindowSizeConstraints(ImVec2(minWidth, 650.0f), ImVec2(9999.0f, 9999.0f));
 
     bool windowOpen = g_state.open;
-    if (!ImGui::Begin(kWindowId, &windowOpen, ImGuiWindowFlags_None)) {
+    const std::string windowName = MakeWindowName(T("Create/edit markers"), kWindowId);
+    if (!ImGui::Begin(windowName.c_str(), &windowOpen, ImGuiWindowFlags_None)) {
         ImGui::End();
         if (!windowOpen) {
             g_state.open = true;
@@ -745,13 +765,13 @@ void Render(AppState& state) {
     std::snprintf(nameBuf, sizeof(nameBuf), "%s", g_state.draft.name.c_str());
     std::snprintf(descBuf, sizeof(descBuf), "%s", g_state.draft.description.c_str());
 
-    if (InputTextHint("Name", nameBuf, sizeof(nameBuf), "Marker set name", fieldsWidth)) {
+    if (InputTextHint(T("Name"), nameBuf, sizeof(nameBuf), "Marker set name", fieldsWidth)) {
         g_state.draft.name = nameBuf;
     }
-    ItemTooltip("Name shown on the map when you are near this marker set's trigger.");
+    ItemTooltip(T("Name shown on the map when you are near this marker set's trigger."));
     ImGui::SameLine();
     OptionsUiKit::IconButton("preview", TextureService::GetUiTexture("eye"), 20.0f,
-                             "Hover to preview markers on the map");
+                             T("Hover to preview markers on the map"));
     if (ImGui::IsItemHovered()) {
         SyncDraftFromSlots();
         state.mapWatch.SetPreviewMarkerSet(g_state.draft);
@@ -760,25 +780,25 @@ void Render(AppState& state) {
         StopPreview(state);
     }
 
-    if (InputTextHint("Description", descBuf, sizeof(descBuf), "Description", fieldsWidth)) {
+    if (InputTextHint(T("Description"), descBuf, sizeof(descBuf), T("Description"), fieldsWidth)) {
         g_state.draft.description = descBuf;
     }
-    ItemTooltip("Description shown on the map when you are near this marker set's trigger.");
+    ItemTooltip(T("Description shown on the map when you are near this marker set's trigger."));
 
-    ImGui::TextUnformatted("Map");
+    ImGui::TextUnformatted(T("Map"));
     ImGui::SameLine();
     ImGui::TextUnformatted(
         MapPickerUi::FormatMapLabel(state.mapData, g_state.draft.mapId).c_str());
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("Updated when you use Set Trigger Location.");
+        ImGui::SetTooltip(T("Updated when you use Set Trigger Location."));
     }
 
-    InputWorldCoord("Trigger", g_state.draft.trigger);
-    if (ImGui::Button("Set Trigger Location")) {
+    InputWorldCoord(T("Trigger"), g_state.draft.trigger);
+    if (ImGui::Button(T("Set Trigger Location"))) {
         ApplyPlayerPosition(state, g_state.draft.trigger, &g_state.draft.mapId);
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("Snap trigger to your current position and update the map ID.");
+        ImGui::SetTooltip(T("Snap trigger to your current position and update the map ID."));
     }
 
     ImGui::Spacing();
@@ -790,13 +810,13 @@ void Render(AppState& state) {
     }
 
     ImGui::Spacing();
-    if (OptionsUiKit::TexturedButton("save", "Save", TextureService::GetUiTexture("iconSave"))) {
+    if (OptionsUiKit::TexturedButton("save", T("Save"), TextureService::GetUiTexture("iconSave"))) {
         if (TrySaveDraft(state)) {
             ForceClose(state);
         }
     }
     ImGui::SameLine();
-    if (OptionsUiKit::TexturedButton("cancel", "Cancel",
+    if (OptionsUiKit::TexturedButton("cancel", T("Cancel"),
                                      TextureService::GetUiTexture("iconGoBack"))) {
         if (ShiftModifierHeld()) {
             ForceClose(state);
@@ -806,7 +826,7 @@ void Render(AppState& state) {
     }
     if (g_state.listingIndex >= 0) {
         ImGui::SameLine();
-        if (OptionsUiKit::TexturedButton("delete", "Delete",
+        if (OptionsUiKit::TexturedButton("delete", T("Delete"),
                                          TextureService::GetUiTexture("iconDelete"))) {
             if (ShiftModifierHeld()) {
                 DeleteDraft(state);
@@ -816,16 +836,16 @@ void Render(AppState& state) {
         }
     }
     ImGui::SameLine();
-    if (OptionsUiKit::TexturedButton("export", "Export",
+    if (OptionsUiKit::TexturedButton("export", T("Export"),
                                      TextureService::GetUiTexture("iconExport"))) {
         SyncDraftFromSlots();
         ImGui::SetClipboardText(MarkerSetClipboard::ExportToBase64(g_state.draft).c_str());
     }
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("Copy a BlishHUD-compatible Base64 marker set share code to the clipboard.");
+        ImGui::SetTooltip(T("Copy a BlishHUD-compatible Base64 marker set share code to the clipboard."));
     }
     ImGui::SameLine();
-    if (OptionsUiKit::TexturedButton("import", "Import",
+    if (OptionsUiKit::TexturedButton("import", T("Import"),
                                      TextureService::GetUiTexture("iconImport"))) {
         g_state.importError.clear();
         if (const char* clipboard = ImGui::GetClipboardText()) {
@@ -833,11 +853,11 @@ void Render(AppState& state) {
         } else {
             g_state.importBuffer.clear();
         }
-        ImGui::OpenPopup("Import Marker Set");
+        ImGui::OpenPopup(T("Import Marker Set"));
     }
 
-    if (ImGui::BeginPopupModal("Import Marker Set", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        SectionSubtext("Paste a marker set share code from BlishHUD or this module.");
+    if (ImGui::BeginPopupModal(T("Import Marker Set"), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        SectionSubtext(T("Paste a marker set share code from BlishHUD or this module."));
 
         char buffer[8192];
         std::snprintf(buffer, sizeof(buffer), "%s", g_state.importBuffer.c_str());
@@ -845,7 +865,7 @@ void Render(AppState& state) {
             g_state.importBuffer = buffer;
         }
 
-        if (OptionsUiKit::TexturedButton("paste", "Paste Clipboard",
+        if (OptionsUiKit::TexturedButton("paste", T("Paste Clipboard"),
                                          TextureService::GetUiTexture("iconCopy"))) {
             if (const char* clipboard = ImGui::GetClipboardText()) {
                 g_state.importBuffer = clipboard;
@@ -856,7 +876,7 @@ void Render(AppState& state) {
             WarningText(g_state.importError.c_str());
         }
 
-        if (OptionsUiKit::TexturedButton("import_confirm", "Import",
+        if (OptionsUiKit::TexturedButton("import_confirm", T("Import"),
                                          TextureService::GetUiTexture("iconImport"))) {
             const auto resolver = [&state](const std::string& communitySetId,
                                            const std::string& name, MarkerSet& out) -> bool {
@@ -877,7 +897,7 @@ void Render(AppState& state) {
             }
         }
         ImGui::SameLine();
-        if (OptionsUiKit::TexturedButton("import_close", "Close",
+        if (OptionsUiKit::TexturedButton("import_close", T("Close"),
                                          TextureService::GetUiTexture("iconGoBack"))) {
             g_state.importError.clear();
             ImGui::CloseCurrentPopup();

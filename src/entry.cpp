@@ -1,5 +1,6 @@
 #include "core/AppState.h"
 #include "core/Branding.h"
+#include "core/Locale.h"
 #include "Version.h"
 #include "core/MumbleUtils.h"
 #include "ui/BillboardRenderer.h"
@@ -20,6 +21,10 @@
 #include <windows.h>
 
 namespace {
+
+// Short alias so the wrapped literals stay readable. This translation unit is
+// outside namespace cm, so the alias is spelled out in full here.
+using cm::Locale::T;
 
 AddonAPI_t* g_api = nullptr;
 
@@ -176,7 +181,9 @@ extern "C" __declspec(dllexport) AddonDefinition_t* GetAddonDef() {
         def.Name = cm::kDisplayName;
         def.Version = {V_MAJOR, V_MINOR, V_BUILD, V_REVISION};
         def.Author = cm::kAuthor;
-        def.Description = cm::kDescription;
+        // Translated at query time: the returned pointer lives in the static
+        // translation table, so it stays valid for the addon's lifetime.
+        def.Description = T(cm::kDescription);
         def.Load = AddonLoad;
         def.Unload = AddonUnload;
         def.Flags = AF_None;

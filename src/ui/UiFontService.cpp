@@ -1,6 +1,9 @@
 #include "ui/UiFontService.h"
 
+#include "core/Locale.h"
+
 #include <imgui.h>
+#include <imgui_internal.h>
 
 namespace cm {
 namespace UiFontService {
@@ -8,16 +11,29 @@ namespace UiFontService {
 namespace {
 
 ImFont* g_menomoniaFont = nullptr;
+AddonAPI_t* g_api = nullptr;
+bool g_cjkMerged = false;
 
 void OnMenomoniaFont(const char* /*identifier*/, void* font) {
     g_menomoniaFont = static_cast<ImFont*>(font);
+    if (font && !g_cjkMerged) {
+        Locale::RegisterFallbackFont(font);
+        g_cjkMerged = true;
+    }
 }
 
 }  // namespace
 
 void Initialize(AddonAPI_t* api, NexusLinkData_t* nexusLink) {
     (void)nexusLink;
+    g_api = api;
     g_menomoniaFont = nullptr;
+    // The ImGui default font is used whenever neither the MENOMONIA font nor the
+    // Nexus link font resolves, so merge the CJK fallback into it here too.
+    if (!g_cjkMerged) {
+        Locale::RegisterFallbackFont(ImGui::GetFont());
+        g_cjkMerged = true;
+    }
     if (api && api->Fonts_Get) {
         api->Fonts_Get(kMenomoniaIdentifier, OnMenomoniaFont);
     }
@@ -28,6 +44,7 @@ void Shutdown(AddonAPI_t* api) {
         api->Fonts_Release(kMenomoniaIdentifier, OnMenomoniaFont);
     }
     g_menomoniaFont = nullptr;
+    g_api = nullptr;
 }
 
 ImFont* GetUiFont(NexusLinkData_t* nexusLink) {
@@ -35,6 +52,12 @@ ImFont* GetUiFont(NexusLinkData_t* nexusLink) {
         return g_menomoniaFont;
     }
     if (nexusLink && nexusLink->Font) {
+        // The Nexus link font never passes through the callback above, so the
+        // CJK fallback is merged here the first time it is handed out.
+        if (!g_cjkMerged) {
+            Locale::RegisterFallbackFont(nexusLink->Font);
+            g_cjkMerged = true;
+        }
         return static_cast<ImFont*>(nexusLink->Font);
     }
     return nullptr;

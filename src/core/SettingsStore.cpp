@@ -106,6 +106,9 @@ void SettingsStore::Load(const std::string& filePath) {
     if (j.contains("CmdMrkCornerTexture")) {
         cornerTexture = SquadMarkerFromInt(j["CmdMrkCornerTexture"].get<int>());
     }
+    if (j.contains("CmdMrkLanguage")) {
+        language = j["CmdMrkLanguage"].get<int>();
+    }
 }
 
 void SettingsStore::Save(const std::string& filePath) const {
@@ -136,6 +139,7 @@ void SettingsStore::Save(const std::string& filePath) const {
         {"CmdMrkCornerIconEnabled", cornerIconEnabled},
         {"CmdMrkAMCornerIconAction", static_cast<int>(cornerIconAction)},
         {"CmdMrkCornerTexture", static_cast<int>(cornerTexture)},
+        {"CmdMrkLanguage", language},
     };
 
     std::filesystem::path path(filePath);

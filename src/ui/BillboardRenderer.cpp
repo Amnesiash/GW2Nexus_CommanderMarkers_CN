@@ -10,6 +10,7 @@
 #include "ui/UiLayer.h"
 #include "utils/InteractBindService.h"
 #include "utils/WorldProjection.h"
+#include "core/Locale.h"
 
 #include <cmath>
 #include <algorithm>
@@ -18,6 +19,10 @@
 namespace cm {
 namespace BillboardRenderer {
 namespace {
+
+// Short alias so the wrapped literals stay readable.
+using cm::Locale::T;
+
 
 constexpr float kFloorFilterMeters = 30.0f;
 constexpr float kMaxBillboardHorizontalDistanceGameUnits = 5000.0f;
@@ -178,7 +183,7 @@ void DrawInteractBubble(AppState& state, const Vec3f& player, const MarkerSet& m
     }
 
     char prompt[256];
-    std::snprintf(prompt, sizeof(prompt), "Press '%s' to place markers\n%s",
+    std::snprintf(prompt, sizeof(prompt), T("Press '%s' to place markers\n%s"),
                   InteractBindService::GetPrimaryKeyLabel(), markerSet.name.c_str());
 
     ImFont* font = UiFontService::GetUiFont(state.nexusLink);

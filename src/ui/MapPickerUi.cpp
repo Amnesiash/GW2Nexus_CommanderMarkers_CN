@@ -1,4 +1,5 @@
 #include "ui/MapPickerUi.h"
+#include "core/Locale.h"
 
 #include <cctype>
 #include <cstdio>
@@ -11,6 +12,10 @@ namespace MapPickerUi {
 std::string FormatMapLabel(const MapDataCache& cache, int mapId);
 
 namespace {
+
+// Short alias so the wrapped literals stay readable.
+using cm::Locale::T;
+
 
 constexpr int kMaxVisibleResults = 100;
 
@@ -110,14 +115,14 @@ void RenderResultList(const MapDataCache& cache, const std::string& filter, int*
         }
 
         if (++shown >= kMaxVisibleResults) {
-            ImGui::TextDisabled("Showing first %d matches. Refine your search.",
+            ImGui::TextDisabled(T("Showing first %d matches. Refine your search."),
                                 kMaxVisibleResults);
             break;
         }
     }
 
     if (shown == 0) {
-        ImGui::TextDisabled("No maps match your search.");
+        ImGui::TextDisabled(T("No maps match your search."));
     }
 }
 
@@ -130,7 +135,11 @@ std::string FormatMapLabel(const MapDataCache& cache, int mapId) {
     if (mapId == 0) {
         return "";
     }
-    return "Unknown map (" + std::to_string(mapId) + ")";
+    // Translated as a whole sentence so the map id lands inside the brackets in
+    // the active language.
+    char buffer[64];
+    std::snprintf(buffer, sizeof(buffer), T("Unknown map (%s)"), std::to_string(mapId).c_str());
+    return std::string(buffer);
 }
 
 bool Draw(const char* label, int* mapId, const MapDataCache& cache) {
