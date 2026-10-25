@@ -39,9 +39,6 @@ struct SettingsStore {
     CornerIconAction cornerIconAction = CornerIconAction::ShowIconMenu;
     SquadMarker cornerTexture = SquadMarker::Heart;
 
-    // Interface language (see core/Locale.h)
-    int language = 0;
-
     void Load(const std::string& filePath);
     void Save(const std::string& filePath) const;
 };

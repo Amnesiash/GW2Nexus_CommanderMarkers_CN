@@ -229,18 +229,6 @@ void RenderGeneralTab(AppState& state) {
         state.settings.cornerTexture = static_cast<SquadMarker>(markerValues[textureIndex]);
     }
 
-    // Interface language sits last among the general settings, without a section
-    // heading of its own. Labels are never translated: picking a language must
-    // stay readable whatever the current language is.
-    static constexpr const char* kLanguageLabels[] = {"跟随 Nexus", "简体中文", "English"};
-    int languageIndex = Locale::ToSettingsValue(Locale::Current());
-    if (SettingCombo(T("Interface language"), &languageIndex, kLanguageLabels, 3)) {
-        const Locale::Language chosen = Locale::FromSettingsValue(languageIndex);
-        Locale::SetLanguage(chosen);
-        state.settings.language = Locale::ToSettingsValue(chosen);
-    }
-    SectionSubtext(T("Follow Nexus uses the language Nexus itself is running. Interface text needs a Nexus restart to fully refresh."));
-
     ImGui::Spacing();
     OptionsApiTab::Render(state);
 }

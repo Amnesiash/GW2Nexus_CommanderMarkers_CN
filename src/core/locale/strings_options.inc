@@ -89,6 +89,3 @@
 {"Available after entering gameplay.", "进入游戏后可用。"},
 {"Open Commander Marker CN Settings", "打开 Commander Marker CN 设置"},
 {"Opens the full settings window.", "打开完整设置窗口。"},
-{"Interface language", "界面语言"},
-{"Follow Nexus uses the language Nexus itself is running. Interface text needs a Nexus restart to fully refresh.",
- "「跟随 Nexus」会使用 Nexus 自身的语言。切换后需重启 Nexus 才能完全刷新界面文字。"},
