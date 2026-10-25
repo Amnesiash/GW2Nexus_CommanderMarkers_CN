@@ -61,6 +61,9 @@ void AppState::CheckRequiredBinds() {
 void AppState::PrepareLoad(AddonAPI_t* apiPtr) {
     shutdownRequested_.store(false);
     api = apiPtr;
+    // Hand the API to the locale module as early as possible: T() asks Nexus for
+    // translations when the language is set to FollowNexus.
+    Locale::SetApi(apiPtr);
     nexusLink = static_cast<NexusLinkData_t*>(api->DataLink_Get(DL_NEXUS_LINK));
     mumbleLink = static_cast<Mumble::Data*>(api->DataLink_Get(DL_MUMBLE_LINK));
     playerIdentity =

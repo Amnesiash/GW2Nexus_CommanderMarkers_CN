@@ -41,8 +41,12 @@ const char* T(const char* text);
 
 std::string Ts(const std::string& text);
 
+// Hands the Nexus API pointer to the locale module. Must be called before the
+// first T() so FollowNexus can query Nexus for translations.
+void SetApi(void* api);
+
 // Publish the bundled strings through the Nexus localization API so the loader
-// may override them later. Safe to call when api (or the API entry) is null.
+// may serve them. Safe to call when api (or the API entry) is null.
 void RegisterNexusStrings(void* api);
 
 // Chinese glyphs are not guaranteed in the font Nexus hands to addons, so the

@@ -19,8 +19,14 @@ StringMap g_chinese = BuildChineseSimplified();
 std::unordered_map<std::string, std::string> g_overrides;
 // Language Nexus itself is running; only used when g_language == FollowNexus.
 Language g_nexusLanguage = Language::ChineseSimplified;
+// Nexus localization API, mirrored here so T() can ask Nexus first.
+AddonAPI_t* g_api = nullptr;
 
 }  // namespace
+
+void SetApi(void* api) {
+    g_api = static_cast<AddonAPI_t*>(api);
+}
 
 // Settings compatibility: before the FollowNexus option existed, 0 meant
 // Chinese and 1 meant English. Keep those two meanings and put FollowNexus at
@@ -64,18 +70,19 @@ Language Resolved() {
 
 namespace {
 
-// Probe string used to ask Nexus which language it is currently using. Any
-// string works as long as the Chinese and English values differ, which the
-// distinct text below guarantees.
+// Nexus does not expose a "which language are you running" getter, so the CJK
+// font decision probes it: register a string whose cn and en values differ, and
+// see which one comes back. Translation itself does not need this - T() just
+// calls Localization_Translate and lets Nexus answer.
 constexpr const char* kProbeIdentifier = "CM_LANG_PROBE";
 constexpr const char* kProbeChinese = "中文";
 constexpr const char* kProbeEnglish = "English";
 
-// Nexus identifies its bundled languages by short codes: its own locale files
-// (Nexus/Locales/cn_Main.json, en_Main.json, ...) declare "Identifier": "cn",
-// "en", "de", ... Registering under both the short code and the BCP-47 tag
-// keeps the probe working whichever form the loader matches against.
-constexpr const char* kChineseLanguageIds[] = {"cn", "zh-CN", "zh"};
+// Nexus identifies its bundled languages by short codes, not BCP-47 tags: each
+// locale file declares an Identifier and cn_Main.json uses "cn" (DisplayName
+// "Chinese"), matching Settings.json's "Language": "Chinese". Registering under
+// "zh-CN" alone would never match.
+constexpr const char* kChineseLanguageId = "cn";
 constexpr const char* kEnglishLanguageId = "en";
 
 }  // namespace
@@ -86,9 +93,7 @@ void DetectNexusLanguage(void* api) {
         return;
     }
 
-    for (const char* id : kChineseLanguageIds) {
-        nexusApi->Localization_Set(kProbeIdentifier, id, kProbeChinese);
-    }
+    nexusApi->Localization_Set(kProbeIdentifier, kChineseLanguageId, kProbeChinese);
     nexusApi->Localization_Set(kProbeIdentifier, kEnglishLanguageId, kProbeEnglish);
 
     const char* translated = nexusApi->Localization_Translate(kProbeIdentifier);
@@ -105,9 +110,26 @@ bool NeedsCjkFont() {
 }
 
 const char* T(const char* text) {
-    if (!text || text[0] == '\0' || Resolved() != Language::ChineseSimplified) {
+    if (!text || text[0] == '\0') {
         return text;
     }
+
+    // FollowNexus: let Nexus resolve the identifier against its own active
+    // language. This is the same approach the other CN addons use - the addon
+    // registers en + cn copies and simply asks for the current one. Anything
+    // Nexus cannot resolve comes back unchanged (the English source), which is
+    // exactly the fallback we want.
+    if (g_language == Language::FollowNexus) {
+        if (g_api && g_api->Localization_Translate) {
+            if (const char* translated = g_api->Localization_Translate(text)) {
+                return translated;
+            }
+        }
+        // No Nexus localization available: fall through to the bundled table.
+    } else if (g_language != Language::ChineseSimplified) {
+        return text;
+    }
+
     const auto overrideIt = g_overrides.find(text);
     if (overrideIt != g_overrides.end()) {
         return overrideIt->second.c_str();
@@ -126,11 +148,8 @@ void RegisterNexusStrings(void* api) {
         return;
     }
     for (const auto& entry : g_chinese) {
-        // Register under every accepted Chinese id so the loader matches it
-        // whether it expects "cn" or a BCP-47 tag.
-        for (const char* id : kChineseLanguageIds) {
-            nexusApi->Localization_Set(entry.first.c_str(), id, std::string(entry.second).c_str());
-        }
+        nexusApi->Localization_Set(entry.first.c_str(), kChineseLanguageId,
+                                   std::string(entry.second).c_str());
         nexusApi->Localization_Set(entry.first.c_str(), kEnglishLanguageId, entry.first.c_str());
     }
 }
