@@ -17,15 +17,34 @@ namespace {
 Language g_language = kDefaultLanguage;
 StringMap g_chinese = BuildChineseSimplified();
 std::unordered_map<std::string, std::string> g_overrides;
+// Language Nexus itself is running; only used when g_language == FollowNexus.
+Language g_nexusLanguage = Language::ChineseSimplified;
 
 }  // namespace
 
+// Settings compatibility: before the FollowNexus option existed, 0 meant
+// Chinese and 1 meant English. Keep those two meanings and put FollowNexus at
+// the new value 2 so existing installs keep their chosen language.
 Language FromSettingsValue(int value) {
-    return value == 1 ? Language::English : Language::ChineseSimplified;
+    switch (value) {
+        case 0:
+            return Language::ChineseSimplified;
+        case 1:
+            return Language::English;
+        default:
+            return Language::FollowNexus;
+    }
 }
 
 int ToSettingsValue(Language language) {
-    return language == Language::English ? 1 : 0;
+    switch (language) {
+        case Language::ChineseSimplified:
+            return 0;
+        case Language::English:
+            return 1;
+        default:
+            return 2;
+    }
 }
 
 void SetLanguage(Language language) {
@@ -36,8 +55,48 @@ Language Current() {
     return g_language;
 }
 
+Language Resolved() {
+    if (g_language != Language::FollowNexus) {
+        return g_language;
+    }
+    return g_nexusLanguage;
+}
+
+namespace {
+
+// Probe string used to ask Nexus which language it is currently using. Any
+// string works as long as the zh-CN and en values differ, which is guaranteed
+// by the distinct text below.
+constexpr const char* kProbeIdentifier = "CM_LANG_PROBE";
+constexpr const char* kProbeChinese = "中文";
+constexpr const char* kProbeEnglish = "English";
+
+}  // namespace
+
+void DetectNexusLanguage(void* api) {
+    auto* nexusApi = static_cast<AddonAPI_t*>(api);
+    if (!nexusApi || !nexusApi->Localization_Set || !nexusApi->Localization_Translate) {
+        return;
+    }
+
+    nexusApi->Localization_Set(kProbeIdentifier, "zh-CN", kProbeChinese);
+    nexusApi->Localization_Set(kProbeIdentifier, "en", kProbeEnglish);
+
+    const char* translated = nexusApi->Localization_Translate(kProbeIdentifier);
+    if (!translated) {
+        return;
+    }
+    // Anything that came back as the Chinese probe means Nexus runs Chinese.
+    g_nexusLanguage = std::string(translated) == kProbeChinese ? Language::ChineseSimplified
+                                                               : Language::English;
+}
+
+bool NeedsCjkFont() {
+    return Resolved() == Language::ChineseSimplified;
+}
+
 const char* T(const char* text) {
-    if (!text || text[0] == '\0' || g_language != Language::ChineseSimplified) {
+    if (!text || text[0] == '\0' || Resolved() != Language::ChineseSimplified) {
         return text;
     }
     const auto overrideIt = g_overrides.find(text);
@@ -110,6 +169,12 @@ bool FileExists(const char* path) {
 void RegisterFallbackFont(void* font) {
     auto* uiFont = static_cast<ImFont*>(font);
     if (!uiFont || g_fontMerged) {
+        return;
+    }
+    // The font fallback follows the active language: an English UI has no CJK
+    // glyphs to render, so merging a 20 MB Chinese font would only waste
+    // texture memory.
+    if (!NeedsCjkFont()) {
         return;
     }
 
